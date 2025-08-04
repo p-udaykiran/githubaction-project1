@@ -52,9 +52,9 @@ jobs:
 
       # Step 3: Install Gitleaks (secret detection tool)
       - name: Install Gitleaks
-        run: sudo apt-get install -y gitleaks
+        run: sudo apt-get install gitleaks -y 
 
       # Step 4: Run Gitleaks to detect hardcoded secrets and save the report
       - name: Run Gitleaks scan
         run: |
-          gitleaks detect -s . -r gitleaks-report.json --format json
+          gitleaks detect --source . -r gitleaks-report.json --format json
