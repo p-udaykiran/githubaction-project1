@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   compile:
@@ -24,3 +25,24 @@ jobs:
 
       - name: Build with Maven
         run: mvn -B package --file pom.xml
+    
+  security-checks:
+    runs-on: ubuntu-latest
+    steps:
+        - name: Install Trivy
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+            wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo gpg --dearmor -o /usr/share/keyrings/trivy-archive-keyring.gpg
+            echo "deb [signed-by=/usr/share/keyrings/trivy-archive-keyring.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/trivy.list > /dev/null
+            sudo apt-get update
+            sudo apt-get install -y trivy
+        - name: Run Trivy scan
+          run: |
+            trivy fs --format table -o fs-report.json .
+        
+        - name: Gitleaks installation
+          run: sudo apt-get install -y gitleaks
+        - name: Run Gitleaks scan
+          run: |
+            gitleaks detect source . -r gitleaks-report.json -f json      
