@@ -58,4 +58,4 @@ jobs:
       # Step 4: Run Gitleaks to detect hardcoded secrets and save the report
       - name: Run Gitleaks scan
         run: |
-            gitleaks detect --no-git -s . -r gitleaks-report.json --format json
+            gitleaks detect --no-git -s . -r gitleaks-report.json -f json
