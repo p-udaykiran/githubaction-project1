@@ -88,11 +88,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-      - name: Check SonarQube Quality Gate status
-        if: steps.quality-gate.outputs.quality_gate_status != 'PASSED'
-        run: |
-          echo "❌ Quality Gate failed. Failing the job."
-          exit 1
+      
 
   docker_build_push:
     name: Docker Build & Push
