@@ -1,5 +1,6 @@
 name: ACTION-PROJECT-CI/CD
 
+# Trigger the workflow on push, pull requests to 'main', or manually
 on:
   push:
     branches:
@@ -10,12 +11,15 @@ on:
   workflow_dispatch:
 
 jobs:
+  # === Build and compile the Java project ===
   compile:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Checkout the source code
       - name: Checkout code
         uses: actions/checkout@v2
 
+      # Step 2: Setup Java JDK 17 using Temurin distribution and enable Maven cache
       - name: Setup Java and JDK 17
         uses: actions/setup-java@v4
         with:
@@ -23,26 +27,34 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      # Step 3: Build the project using Maven
       - name: Build with Maven
         run: mvn -B package --file pom.xml
-    
+
+  # === Security scanning job ===
   security-checks:
     runs-on: ubuntu-latest
     steps:
-        - name: Install Trivy
-          run: |
-            sudo apt-get update
-            sudo apt-get install -y wget apt-transport-https gnupg lsb-release
-            wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo gpg --dearmor -o /usr/share/keyrings/trivy-archive-keyring.gpg
-            echo "deb [signed-by=/usr/share/keyrings/trivy-archive-keyring.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/trivy.list > /dev/null
-            sudo apt-get update
-            sudo apt-get install -y trivy
-        - name: Run Trivy scan
-          run: |
-            trivy fs --format table -o fs-report.json .
-        
-        - name: Gitleaks installation
-          run: sudo apt-get install -y gitleaks
-        - name: Run Gitleaks scan
-          run: |
-            gitleaks detect source . -r gitleaks-report.json -f json      
+      # Step 1: Install Trivy (vulnerability scanner)
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo gpg --dearmor -o /usr/share/keyrings/trivy-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/trivy-archive-keyring.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/trivy.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y trivy
+
+      # Step 2: Run Trivy scan on the project filesystem and save the report
+      - name: Run Trivy scan
+        run: |
+          trivy fs --format table -o fs-report.json .
+
+      # Step 3: Install Gitleaks (secret detection tool)
+      - name: Install Gitleaks
+        run: sudo apt-get install -y gitleaks
+
+      # Step 4: Run Gitleaks to detect hardcoded secrets and save the report
+      - name: Run Gitleaks scan
+        run: |
+          gitleaks detect -s . -r gitleaks-report.json --format json
